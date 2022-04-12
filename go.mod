@@ -1,4 +1,4 @@
-module rss_reader
+module github.com/nestorov88/rss_reader
 
 go 1.18
 
