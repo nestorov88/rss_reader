@@ -1,4 +1,4 @@
-# rss_reader
+#RSS reader package
 
 RSS reader package, which parses concurrently multiple RSS/Atom feeds.
 
