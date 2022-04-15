@@ -8,12 +8,18 @@ import (
 
 //RssItem will hold parser results
 type RssItem struct {
-	Title       string
-	Source      string
-	SourceURL   string
-	Link        string
-	PublishDate time.Time
-	Description string
+	Title       string    `json:"title"`
+	Source      string    `json:"source"`
+	SourceURL   string    `json:"source_url"`
+	Link        string    `json:"link"`
+	PublishDate time.Time `json:"publish_date"`
+	Description string    `json:"description"`
+}
+
+//parsedUrlFeed held the feeds for corresponding URL
+type parsedUrlFeed struct {
+	Url  string
+	Feed *gofeed.Feed
 }
 
 // Parse will retrieve concurrently RSS feed data from given array of URLs
@@ -30,7 +36,7 @@ func Parse(urls []string) ([]RssItem, error) {
 
 	urls = getUniqueValuesSlice(urls)
 
-	c := make(chan *gofeed.Feed, len(urls))
+	c := make(chan *parsedUrlFeed, len(urls))
 	errC := make(chan error, len(urls))
 
 	for _, v := range urls {
@@ -47,11 +53,11 @@ func Parse(urls []string) ([]RssItem, error) {
 		select {
 
 		case rss := <-c:
-			for _, feed := range rss.Items {
+			for _, feed := range rss.Feed.Items {
 				result = append(result, RssItem{
 					Title:       feed.Title,
-					Source:      rss.Title,
-					SourceURL:   rss.Link,
+					Source:      rss.Feed.Title,
+					SourceURL:   rss.Url,
 					Link:        feed.Link,
 					PublishDate: *feed.PublishedParsed,
 					Description: feed.Description,
@@ -88,7 +94,7 @@ func getUniqueValuesSlice(strSlice []string) []string {
 }
 
 //parseUrl send to given channel gofeed.Feed after parsing given URL
-func parseUrl(url string, c chan *gofeed.Feed, errC chan error) {
+func parseUrl(url string, c chan *parsedUrlFeed, errC chan error) {
 
 	feed, err := gofeed.NewParser().ParseURL(url)
 
@@ -98,5 +104,5 @@ func parseUrl(url string, c chan *gofeed.Feed, errC chan error) {
 		return
 	}
 
-	c <- feed
+	c <- &parsedUrlFeed{Url: url, Feed: feed}
 }
